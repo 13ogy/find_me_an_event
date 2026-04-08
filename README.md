@@ -76,6 +76,13 @@ Le serveur démarre sur `http://localhost:8080`.
 | GET | /api/me | Profil (authentifié) |
 | GET | /api/location | Géolocalisation IP (authentifié) |
 | GET | /api/events?lat=X&lon=Y&radius=Z | Événements à proximité (authentifié) |
+| GET | /api/events/next?lat=X&lon=Y&radius=Z | Prochain événement non voté (authentifié) |
+| POST | /api/events/{id}/vote | Voter like/unlike (authentifié) |
+| DELETE | /api/events/{id}/vote | Retirer son vote (authentifié) |
+| GET | /api/events/{id}/stats | Compteur likes/unlikes |
+| GET | /api/events/{id}/reviews | Avis sur un événement |
+| POST | /api/events/{id}/reviews | Poster un avis (authentifié) |
+| GET | /api/me/history | Historique des votes (authentifié) |
 
 ## Licence
 
