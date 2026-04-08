@@ -17,14 +17,15 @@ L'utilisateur se connecte, l'application détecte sa position via son adresse IP
 ## Fonctionnalités
 
 - [x] Squelette du projet
-- [ ] Inscription / connexion / déconnexion
-- [ ] Géolocalisation automatique via l'IP
-- [ ] Recherche d'événements dans un rayon choisi
-- [ ] Parcours des événements (like / unlike)
-- [ ] Compteur de likes et unlikes par événement
-- [ ] Avis et commentaires des utilisateurs
-- [ ] Page de détail d'un événement liké
-- [ ] Historique des votes
+- [x] Inscription / connexion / déconnexion
+- [x] Géolocalisation automatique via l'IP
+- [x] Recherche d'événements dans un rayon choisi
+- [x] Parcours des événements (like / unlike)
+- [x] Compteur de likes et unlikes par événement
+- [x] Avis et commentaires des utilisateurs
+- [x] Page de détail d'un événement liké
+- [x] Historique des votes
+- [ ] Design responsive + finitions
 
 ## Structure du projet
 
@@ -53,10 +54,16 @@ find_me_an_event/
 │   │   ├── api.js        # Appels fetch vers le serveur
 │   │   ├── AuthContext.jsx # État d'authentification
 │   │   ├── app.css       # Styles globaux
+│   │   ├── components/
+│   │   │   ├── Navigation.jsx
+│   │   │   ├── CarteEvenement.jsx
+│   │   │   └── FormulaireAvis.jsx
 │   │   └── pages/
 │   │       ├── Connexion.jsx
 │   │       ├── Inscription.jsx
-│   │       └── Accueil.jsx
+│   │       ├── Decouverte.jsx    # Swipe like/unlike
+│   │       ├── DetailEvenement.jsx
+│   │       └── Historique.jsx
 │   ├── vite.config.js    # Proxy vers le serveur Go
 │   └── package.json
 ├── docs/
