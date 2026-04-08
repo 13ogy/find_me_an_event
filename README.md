@@ -30,16 +30,50 @@ L'utilisateur se connecte, l'application détecte sa position via son adresse IP
 
 ```
 find_me_an_event/
-├── server/           # Serveur Go (API REST)
-├── client/           # Application React
-├── docs/             # Documentation du projet
+├── server/
+│   ├── main.go           # Point d'entrée, routeur
+│   ├── config.go         # Variables d'environnement
+│   ├── db.go             # Connexion PostgreSQL + migrations
+│   ├── utilisateur.go    # Struct Utilisateur, requêtes SQL
+│   ├── session.go        # Gestion des sessions (tokens)
+│   ├── auth.go           # Handlers inscription/connexion/déconnexion
+│   ├── middleware.go      # Vérification de session
+│   ├── go.mod / go.sum
+├── client/               # Application React (à venir)
+├── docs/
+│   └── dossier.md        # Documentation du projet
 ├── .gitignore
 └── README.md
 ```
 
 ## Lancement
 
-> Instructions à venir dans les prochaines phases.
+### Prérequis
+- Go 1.22+
+- PostgreSQL 16+
+
+### Base de données
+```bash
+createdb find_me_an_event
+```
+
+### Serveur
+```bash
+cd server
+export DATABASE_URL="postgres://postgres:postgres@localhost:5432/find_me_an_event?sslmode=disable"
+go run .
+```
+
+Le serveur démarre sur `http://localhost:8080`.
+
+### API disponibles
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| POST | /api/register | Inscription (nom, email, mot_de_passe) |
+| POST | /api/login | Connexion (nom, mot_de_passe) |
+| POST | /api/logout | Déconnexion |
+| GET | /api/me | Profil (authentifié) |
 
 ## Licence
 
