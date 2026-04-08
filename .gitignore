@@ -1,0 +1,30 @@
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Dossiers de cours (PDFs)
+lessons/
+td/
+projet_sujet/
+
+# Go
+server/find-me-an-event
+server/*.exe
+server/tmp/
+
+# Node / React
+client/node_modules/
+client/dist/
+client/.vite/
+
+# Environnement
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
