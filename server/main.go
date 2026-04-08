@@ -32,6 +32,10 @@ func main() {
 	// Route protégée : profil utilisateur
 	mux.HandleFunc("GET /api/me", proteger(db, handlerProfil(db)))
 
+	// Routes événements et géolocalisation (protégées)
+	mux.HandleFunc("GET /api/location", proteger(db, handlerLocalisation()))
+	mux.HandleFunc("GET /api/events", proteger(db, handlerEvenements()))
+
 	log.Printf("serveur démarré sur :%s\n", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))
 }
