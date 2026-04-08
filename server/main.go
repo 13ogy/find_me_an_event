@@ -35,6 +35,19 @@ func main() {
 	// Routes événements et géolocalisation (protégées)
 	mux.HandleFunc("GET /api/location", proteger(db, handlerLocalisation()))
 	mux.HandleFunc("GET /api/events", proteger(db, handlerEvenements()))
+	mux.HandleFunc("GET /api/events/next", proteger(db, handlerProchainEvenement(db)))
+
+	// Routes votes (protégées)
+	mux.HandleFunc("POST /api/events/{id}/vote", proteger(db, handlerVoter(db)))
+	mux.HandleFunc("DELETE /api/events/{id}/vote", proteger(db, handlerSupprimerVote(db)))
+	mux.HandleFunc("GET /api/events/{id}/stats", proteger(db, handlerStats(db)))
+
+	// Routes avis (protégées)
+	mux.HandleFunc("GET /api/events/{id}/reviews", proteger(db, handlerListerAvis(db)))
+	mux.HandleFunc("POST /api/events/{id}/reviews", proteger(db, handlerPosterAvis(db)))
+
+	// Route historique (protégée)
+	mux.HandleFunc("GET /api/me/history", proteger(db, handlerHistorique(db)))
 
 	log.Printf("serveur démarré sur :%s\n", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))

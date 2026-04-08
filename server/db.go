@@ -37,6 +37,23 @@ func creerTables(db *sql.DB) error {
 			expire_le TIMESTAMP NOT NULL,
 			cree_le TIMESTAMP DEFAULT NOW()
 		)`,
+		`CREATE TABLE IF NOT EXISTS votes (
+			id SERIAL PRIMARY KEY,
+			utilisateur_id INTEGER REFERENCES utilisateurs(id) ON DELETE CASCADE,
+			evenement_id VARCHAR(255) NOT NULL,
+			titre_evenement VARCHAR(500),
+			vote VARCHAR(10) NOT NULL CHECK (vote IN ('like', 'unlike')),
+			cree_le TIMESTAMP DEFAULT NOW(),
+			UNIQUE(utilisateur_id, evenement_id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS avis (
+			id SERIAL PRIMARY KEY,
+			utilisateur_id INTEGER REFERENCES utilisateurs(id) ON DELETE CASCADE,
+			evenement_id VARCHAR(255) NOT NULL,
+			commentaire TEXT NOT NULL,
+			note INTEGER CHECK (note BETWEEN 1 AND 5),
+			cree_le TIMESTAMP DEFAULT NOW()
+		)`,
 	}
 
 	for _, req := range requetes {
