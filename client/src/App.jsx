@@ -5,6 +5,7 @@ import Inscription from './pages/Inscription'
 import Decouverte from './pages/Decouverte'
 import DetailEvenement from './pages/DetailEvenement'
 import Historique from './pages/Historique'
+import NotFound from './pages/NotFound'
 
 // Redirige vers /connexion si l'utilisateur n'est pas connecté
 function RouteProtegee({ children }) {
@@ -34,6 +35,7 @@ function App() {
           <Route path="/" element={<RouteProtegee><Decouverte /></RouteProtegee>} />
           <Route path="/evenement/:id" element={<RouteProtegee><DetailEvenement /></RouteProtegee>} />
           <Route path="/historique" element={<RouteProtegee><Historique /></RouteProtegee>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

@@ -126,3 +126,99 @@ Application **monopage (SPA)** en React.
 
 ### Appels AJAX
 Tous les appels utilisent `fetch()` avec `credentials: 'include'` pour envoyer le cookie de session. Les réponses sont en JSON.
+
+## Exemples de requêtes/réponses
+
+### Inscription
+```
+POST /api/register
+Content-Type: application/json
+
+{ "nom": "alice", "email": "alice@example.com", "mot_de_passe": "secret123" }
+
+→ 201 { "id": 1, "nom": "alice", "email": "alice@example.com" }
+```
+
+### Connexion
+```
+POST /api/login
+Content-Type: application/json
+
+{ "nom": "alice", "mot_de_passe": "secret123" }
+
+→ 200 { "id": 1, "nom": "alice", "email": "alice@example.com" }
+Set-Cookie: session=<token>; HttpOnly; SameSite=Lax
+```
+
+### Géolocalisation
+```
+GET /api/location
+Cookie: session=<token>
+
+→ 200 { "lat": 48.8566, "lon": 2.3522, "ville": "Paris", "pays": "France" }
+```
+
+### Prochain événement
+```
+GET /api/events/next?lat=48.85&lon=2.35&radius=5
+Cookie: session=<token>
+
+→ 200 {
+  "evenement": {
+    "id": "abc123",
+    "titre": "Festival Jazz",
+    "chapeau": "Un festival de jazz en plein air",
+    "date_debut": "2026-06-15T18:00:00+00:00",
+    "date_fin": "2026-06-15T23:00:00+00:00",
+    "nom_lieu": "Parc de la Villette",
+    "adresse": "211 Avenue Jean Jaurès",
+    "ville": "Paris",
+    "code_postal": "75019",
+    "lat": 48.8938, "lon": 2.3913,
+    "prix": "gratuit",
+    "cover_url": "https://..."
+  },
+  "stats": { "evenement_id": "abc123", "likes": 23, "unlikes": 4 }
+}
+```
+
+### Vote
+```
+POST /api/events/abc123/vote
+Content-Type: application/json
+Cookie: session=<token>
+
+{ "vote": "like", "titre": "Festival Jazz" }
+
+→ 200 { "message": "vote enregistré" }
+```
+
+### Poster un avis
+```
+POST /api/events/abc123/reviews
+Content-Type: application/json
+Cookie: session=<token>
+
+{ "commentaire": "Super ambiance !", "note": 5 }
+
+→ 201 { "id": 1, "utilisateur_id": 1, "evenement_id": "abc123", "commentaire": "Super ambiance !", "note": 5 }
+```
+
+## Schéma du système
+
+```
+┌─────────────┐       AJAX/JSON        ┌──────────────────┐
+│  Client      │ ◄────────────────────► │  Serveur Go      │
+│  React+Vite  │   Cookie de session    │  net/http         │
+│  port 5173   │                        │  port 8080        │
+└─────────────┘                        └──────┬───────────┘
+                                              │
+                         ┌────────────────────┼────────────────────┐
+                         │                    │                    │
+                         ▼                    ▼                    ▼
+                 ┌──────────────┐   ┌────────────────┐   ┌─────────────┐
+                 │  PostgreSQL   │   │  OpenData Paris │   │  ip-api.com │
+                 │  (données     │   │  (événements)   │   │  (géoloc)   │
+                 │  utilisateur) │   └────────────────┘   └─────────────┘
+                 └──────────────┘
+```

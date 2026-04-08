@@ -527,3 +527,60 @@ body {
 .historique-unlike {
   border-left: 3px solid #ef5350;
 }
+
+/* Page 404 */
+.page-404 {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.page-404 h2 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.page-404 a {
+  color: #4a90d9;
+}
+
+/* Responsive — mobile first */
+@media (max-width: 600px) {
+  .nav-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.6rem 1rem;
+  }
+
+  .nav-liens {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-auth {
+    margin: 40px 1rem;
+  }
+
+  .carte-image {
+    max-height: 180px;
+  }
+
+  .boutons-vote {
+    flex-direction: row;
+  }
+
+  .btn-like, .btn-unlike {
+    font-size: 1rem;
+    padding: 0.7rem;
+  }
+
+  .detail-contenu {
+    padding: 0 0.5rem;
+  }
+
+  .historique-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+}

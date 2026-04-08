@@ -77,10 +77,17 @@ find_me_an_event/
 ### Prérequis
 - Go 1.22+
 - PostgreSQL 16+
+- Node.js 18+
 
 ### Base de données
 ```bash
 createdb find_me_an_event
+```
+
+### Variables d'environnement
+Copier `.env.example` et adapter si nécessaire :
+```bash
+cp .env.example .env
 ```
 
 ### Serveur
@@ -89,6 +96,8 @@ cd server
 export DATABASE_URL="postgres://postgres:postgres@localhost:5432/find_me_an_event?sslmode=disable"
 go run .
 ```
+
+Le serveur démarre sur `http://localhost:8080`. Les tables sont créées automatiquement au démarrage.
 
 ### Client React
 ```bash
