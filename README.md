@@ -34,12 +34,31 @@ find_me_an_event/
 │   ├── main.go           # Point d'entrée, routeur
 │   ├── config.go         # Variables d'environnement
 │   ├── db.go             # Connexion PostgreSQL + migrations
+│   ├── cors.go           # Middleware CORS
 │   ├── utilisateur.go    # Struct Utilisateur, requêtes SQL
 │   ├── session.go        # Gestion des sessions (tokens)
 │   ├── auth.go           # Handlers inscription/connexion/déconnexion
 │   ├── middleware.go      # Vérification de session
-│   ├── go.mod / go.sum
-├── client/               # Application React (à venir)
+│   ├── geolocalisation.go # Client ip-api.com
+│   ├── evenements.go     # Client OpenData Paris
+│   ├── vote.go           # Modèle Vote, requêtes SQL
+│   ├── avis.go           # Modèle Avis, requêtes SQL
+│   ├── handler_api.go    # Handlers localisation + événements
+│   ├── handler_votes.go  # Handlers votes, avis, historique
+│   └── go.mod / go.sum
+├── client/
+│   ├── src/
+│   │   ├── main.jsx      # Point d'entrée React
+│   │   ├── App.jsx       # Router + routes protégées
+│   │   ├── api.js        # Appels fetch vers le serveur
+│   │   ├── AuthContext.jsx # État d'authentification
+│   │   ├── app.css       # Styles globaux
+│   │   └── pages/
+│   │       ├── Connexion.jsx
+│   │       ├── Inscription.jsx
+│   │       └── Accueil.jsx
+│   ├── vite.config.js    # Proxy vers le serveur Go
+│   └── package.json
 ├── docs/
 │   └── dossier.md        # Documentation du projet
 ├── .gitignore
@@ -64,7 +83,14 @@ export DATABASE_URL="postgres://postgres:postgres@localhost:5432/find_me_an_even
 go run .
 ```
 
-Le serveur démarre sur `http://localhost:8080`.
+### Client React
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Le client démarre sur `http://localhost:5173` et redirige les appels `/api` vers le serveur Go.
 
 ### API disponibles
 

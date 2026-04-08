@@ -1,0 +1,125 @@
+/* Styles globaux — simples et lisibles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Pages d'authentification */
+.page-auth {
+  max-width: 400px;
+  margin: 80px auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.page-auth h1 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.page-auth form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.page-auth label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.page-auth input {
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.page-auth input:focus {
+  outline: none;
+  border-color: #4a90d9;
+}
+
+.page-auth button {
+  padding: 0.7rem;
+  background: #4a90d9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.page-auth button:hover {
+  background: #357abd;
+}
+
+.page-auth p {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.page-auth a {
+  color: #4a90d9;
+}
+
+.erreur {
+  color: #d9534f;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Page d'accueil */
+.page-accueil header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-accueil h1 {
+  font-size: 1.3rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-actions button {
+  padding: 0.4rem 0.8rem;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.header-actions button:hover {
+  background: #d0d0d0;
+}
+
+.page-accueil main {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
