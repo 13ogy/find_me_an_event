@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './AuthContext'
 import Connexion from './pages/Connexion'
 import Inscription from './pages/Inscription'
-import Accueil from './pages/Accueil'
+import Decouverte from './pages/Decouverte'
+import DetailEvenement from './pages/DetailEvenement'
+import Historique from './pages/Historique'
 
 // Redirige vers /connexion si l'utilisateur n'est pas connecté
 function RouteProtegee({ children }) {
@@ -29,7 +31,9 @@ function App() {
         <Routes>
           <Route path="/connexion" element={<RoutePublique><Connexion /></RoutePublique>} />
           <Route path="/inscription" element={<RoutePublique><Inscription /></RoutePublique>} />
-          <Route path="/" element={<RouteProtegee><Accueil /></RouteProtegee>} />
+          <Route path="/" element={<RouteProtegee><Decouverte /></RouteProtegee>} />
+          <Route path="/evenement/:id" element={<RouteProtegee><DetailEvenement /></RouteProtegee>} />
+          <Route path="/historique" element={<RouteProtegee><Historique /></RouteProtegee>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
