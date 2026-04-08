@@ -74,6 +74,8 @@ Le serveur démarre sur `http://localhost:8080`.
 | POST | /api/login | Connexion (nom, mot_de_passe) |
 | POST | /api/logout | Déconnexion |
 | GET | /api/me | Profil (authentifié) |
+| GET | /api/location | Géolocalisation IP (authentifié) |
+| GET | /api/events?lat=X&lon=Y&radius=Z | Événements à proximité (authentifié) |
 
 ## Licence
 
