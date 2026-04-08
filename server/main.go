@@ -50,5 +50,5 @@ func main() {
 	mux.HandleFunc("GET /api/me/history", proteger(db, handlerHistorique(db)))
 
 	log.Printf("serveur démarré sur :%s\n", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, cors(mux)))
 }
