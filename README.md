@@ -76,37 +76,49 @@ find_me_an_event/
 
 ### Prérequis
 - Go 1.22+
-- PostgreSQL 16+
+- PostgreSQL 14+
 - Node.js 18+
 
-### Base de données
-```bash
-createdb find_me_an_event
-```
+### Première installation
 
-### Variables d'environnement
-Copier `.env.example` et adapter si nécessaire :
-```bash
-cp .env.example .env
-```
+1. **Démarrer PostgreSQL** (si ce n'est pas déjà fait) :
+   ```bash
+   brew services start postgresql@14
+   ```
 
-### Serveur
+2. **Créer le rôle et la base de données** :
+   ```bash
+   psql -d postgres -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres';"
+   createdb -U postgres find_me_an_event
+   ```
+
+3. **Installer les dépendances du client** :
+   ```bash
+   cd client
+   npm install
+   ```
+
+### Lancement (usage quotidien)
+
+Dans un premier terminal, lancer le serveur Go :
 ```bash
 cd server
-export DATABASE_URL="postgres://postgres:postgres@localhost:5432/find_me_an_event?sslmode=disable"
 go run .
 ```
 
-Le serveur démarre sur `http://localhost:8080`. Les tables sont créées automatiquement au démarrage.
-
-### Client React
+Dans un second terminal, lancer le client React :
 ```bash
 cd client
-npm install
 npm run dev
 ```
 
+Le serveur démarre sur `http://localhost:8080` (tables créées automatiquement).
 Le client démarre sur `http://localhost:5173` et redirige les appels `/api` vers le serveur Go.
+
+> **Note :** si PostgreSQL n'est pas démarré (ex. après un redémarrage), lancez d'abord :
+> ```bash
+> brew services start postgresql@14
+> ```
 
 ### API disponibles
 
