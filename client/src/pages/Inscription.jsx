@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../AuthContext'
+import { useAuth } from '../useAuth'
 import { useNavigate, Link } from 'react-router-dom'
 
 export default function Inscription() {
@@ -9,15 +9,19 @@ export default function Inscription() {
   const [email, setEmail] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
   const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
 
   async function soumettre(e) {
     e.preventDefault()
+    if (envoi) return
     setErreur('')
+    setEnvoi(true)
     try {
       await inscrire(nom, email, motDePasse)
       navigate('/')
     } catch (err) {
       setErreur(err.message)
+      setEnvoi(false)
     }
   }
 
@@ -54,7 +58,9 @@ export default function Inscription() {
           />
         </label>
         {erreur && <p className="erreur">{erreur}</p>}
-        <button type="submit">Créer mon compte</button>
+        <button type="submit" disabled={envoi}>
+          {envoi ? 'Création…' : 'Créer mon compte'}
+        </button>
       </form>
       <p>
         Déjà un compte ? <Link to="/connexion">Se connecter</Link>

@@ -4,19 +4,19 @@ import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import CarteEvenement from '../components/CarteEvenement'
 
-// Page principale — découverte d'événements avec like/unlike
 export default function Decouverte() {
   const navigate = useNavigate()
   const [position, setPosition] = useState(null)
   const [rayon, setRayon] = useState(5)
-  const [categorie, setCategorie] = useState('') //
-  const [evenement, setEvenement] = useState(null) //
+  const [categorie, setCategorie] = useState('')
+  const [evenement, setEvenement] = useState(null)
   const [stats, setStats] = useState(null)
   const [chargement, setChargement] = useState(true)
   const [message, setMessage] = useState('')
   const [voteEnCours, setVoteEnCours] = useState(false)
 
-  // Détecte la position à l'ouverture de la page
+  // Géoloc IP une seule fois à l'ouverture de la page : le rayon peut
+  // changer sans avoir à redemander la position.
   useEffect(() => {
     localisation()
       .then(loc => setPosition(loc))
@@ -24,7 +24,6 @@ export default function Decouverte() {
       .finally(() => setChargement(false))
   }, [])
 
-  // Charge le prochain événement quand la position ou le rayon change
   const chargerSuivant = useCallback(async () => {
     if (!position) return
 
@@ -51,7 +50,6 @@ export default function Decouverte() {
     chargerSuivant()
   }, [chargerSuivant])
 
-  // Enregistre le vote puis charge l'événement suivant ou redirige vers la page détail
   async function handleVote(typeVote) {
     if (!evenement || voteEnCours) return
 
@@ -60,7 +58,8 @@ export default function Decouverte() {
       await voter(evenement.id, typeVote, evenement.titre)
 
       if (typeVote === 'like') {
-        // Redirige vers la page de détail avec les données déjà chargées
+        // On passe evenement et stats dans le state du router : la page de
+        // détail évite ainsi un re-fetch des infos déjà connues.
         navigate(`/evenement/${evenement.id}`, {
           state: { evenement, stats }
         })
@@ -104,7 +103,6 @@ export default function Decouverte() {
               <option value="famille">Famille</option>
             </select>
           </label>
-
 
           {position && (
             <span className="position-info">

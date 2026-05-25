@@ -9,12 +9,11 @@ import (
 	"time"
 )
 
-// Evenement représente un événement parisien, mappé depuis l'API OpenData
 type Evenement struct {
 	ID          string  `json:"id"`
 	Titre       string  `json:"titre"`
 	Description string  `json:"description"`
-	Chapeau     string  `json:"chapeau"` // Texte d'accroche
+	Chapeau     string  `json:"chapeau"`
 	DateDebut   string  `json:"date_debut"`
 	DateFin     string  `json:"date_fin"`
 	CoverURL    string  `json:"cover_url"`
@@ -31,17 +30,23 @@ type Evenement struct {
 
 const baseURLOpenData = "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/que-faire-a-paris-/records"
 
-// rechercherEvenements appelle l'API OpenData Paris avec un filtre géographique
-func rechercherEvenements(lat, lon float64, rayonKm int, limite int, categorie string) ([]Evenement, error) { // Filtre ODSQL : événements dans le rayon, avec des dates définies
+// rechercherEvenements interroge l'API OpenData en restreignant aux
+// événements à moins de `rayonKm` du point demandé et encore en cours
+// (date_end >= aujourd'hui). Un éventuel mot-clé `categorie` est cherché
+// dans le titre, la description et le chapeau via l'opérateur `search`
+// d'ODSQL (tolérant aux accents et au pluriel).
+func rechercherEvenements(lat, lon float64, rayonKm int, limite int, categorie string) ([]Evenement, error) {
+	// ODSQL attend POINT(lon lat), pas (lat lon) — facile à inverser.
 	filtre := fmt.Sprintf(
 		"within_distance(lat_lon, GEOM'POINT(%f %f)', %dkm) AND date_start IS NOT NULL AND date_end >= '%s'",
 		lon, lat, rayonKm, time.Now().Format("2006-01-02"),
 	)
 
+	// On échappe les apostrophes pour ne pas casser le filtre ODSQL
+	// (équivalent d'une injection SQL côté API tierce).
 	categorie = strings.TrimSpace(categorie)
 	if categorie != "" {
 		categorie = strings.ReplaceAll(categorie, "'", "''")
-
 		filtre += fmt.Sprintf(
 			" AND (search(title, '%s') OR search(description, '%s') OR search(lead_text, '%s'))",
 			categorie, categorie, categorie,
@@ -66,7 +71,6 @@ func rechercherEvenements(lat, lon float64, rayonKm int, limite int, categorie s
 		return nil, fmt.Errorf("opendata status %d", resp.StatusCode)
 	}
 
-	// Parsing de la réponse — structure spécifique à l'API OpenData v2.1
 	var resultat struct {
 		TotalCount int               `json:"total_count"`
 		Results    []json.RawMessage `json:"results"`
@@ -79,7 +83,8 @@ func rechercherEvenements(lat, lon float64, rayonKm int, limite int, categorie s
 	for _, raw := range resultat.Results {
 		ev, err := convertirRecord(raw)
 		if err != nil {
-			continue // On ignore les records mal formés
+			// Un seul record mal formé ne doit pas casser tout le lot.
+			continue
 		}
 		evenements = append(evenements, ev)
 	}
@@ -87,7 +92,9 @@ func rechercherEvenements(lat, lon float64, rayonKm int, limite int, categorie s
 	return evenements, nil
 }
 
-// convertirRecord transforme un record brut OpenData en Evenement
+// convertirRecord aplatit la structure OpenData (champs anglais, lat/lon
+// imbriqués) vers notre struct Evenement (champs français, lat/lon plats)
+// que le client consomme.
 func convertirRecord(raw json.RawMessage) (Evenement, error) {
 	var record struct {
 		ID          string `json:"id"`

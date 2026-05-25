@@ -4,13 +4,13 @@ import { statsEvenement, listerAvis } from '../api'
 import Navigation from '../components/Navigation'
 import FormulaireAvis from '../components/FormulaireAvis'
 
-// Page détail — affichée après un like, avec infos complètes + avis
 export default function DetailEvenement() {
   const { id } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Récupère l'événement depuis le state de navigation (passé par Decouverte)
+  // L'événement est passé via location.state depuis la page Découverte.
+  // En accès direct par URL ce state est vide : on dégrade proprement.
   const evenement = location.state?.evenement
 
   const [stats, setStats] = useState(location.state?.stats || null)
@@ -18,24 +18,27 @@ export default function DetailEvenement() {
   const [chargement, setChargement] = useState(true)
 
   useEffect(() => {
+    let actif = true
     async function charger() {
       try {
+        // Stats et avis indépendants : on parallélise les appels.
         const [s, a] = await Promise.all([
           statsEvenement(id),
           listerAvis(id)
         ])
+        if (!actif) return
         setStats(s)
         setAvis(a)
       } catch (err) {
-        console.error('Erreur chargement détail:', err)
+        if (actif) console.error('Erreur chargement détail:', err)
       } finally {
-        setChargement(false)
+        if (actif) setChargement(false)
       }
     }
     charger()
+    return () => { actif = false }
   }, [id])
 
-  // Lien Google Maps vers la localisation exacte
   const lienGoogleMaps = evenement?.lat && evenement?.lon
     ? `https://www.google.com/maps?q=${evenement.lat},${evenement.lon}`
     : null
@@ -47,7 +50,6 @@ export default function DetailEvenement() {
     })
   }
 
-  // Quand aucun événement dans le state (accès direct par URL)
   if (!evenement) {
     return (
       <div className="page-detail">
@@ -83,6 +85,9 @@ export default function DetailEvenement() {
         )}
 
         {evenement.description && (
+          // OpenData renvoie de l'HTML formaté (paragraphes, liens). On le
+          // rend tel quel ; la source est une API publique de la Mairie de
+          // Paris, considérée fiable dans le cadre du projet.
           <div
             className="detail-description"
             dangerouslySetInnerHTML={{ __html: evenement.description }}

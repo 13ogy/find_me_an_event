@@ -1,8 +1,6 @@
-// Carte d'événement — affiche les infos principales pour le swipe
 export default function CarteEvenement({ evenement, stats }) {
   if (!evenement) return null
 
-  // Formatage lisible des dates ISO
   const formatDate = (iso) => {
     if (!iso) return '—'
     return new Date(iso).toLocaleDateString('fr-FR', {
@@ -17,6 +15,8 @@ export default function CarteEvenement({ evenement, stats }) {
           className="carte-image"
           src={evenement.cover_url}
           alt={evenement.titre}
+          // Certaines URLs OpenData sont mortes : on cache l'élément plutôt
+          // que d'afficher l'icône cassée du navigateur.
           onError={(e) => { e.target.style.display = 'none' }}
         />
       )}

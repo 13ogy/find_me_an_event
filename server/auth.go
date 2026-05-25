@@ -9,24 +9,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// reponseJSON écrit une réponse JSON avec le code HTTP donné
 func reponseJSON(w http.ResponseWriter, code int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(data)
 }
 
-// reponseErreur écrit une erreur JSON
 func reponseErreur(w http.ResponseWriter, code int, message string) {
 	reponseJSON(w, code, map[string]string{"erreur": message})
 }
 
-// handlerInscription gère POST /api/register
 func handlerInscription(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
-			Nom      string `json:"nom"`
-			Email    string `json:"email"`
+			Nom        string `json:"nom"`
+			Email      string `json:"email"`
 			MotDePasse string `json:"mot_de_passe"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -34,7 +31,6 @@ func handlerInscription(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Validation basique
 		body.Nom = strings.TrimSpace(body.Nom)
 		body.Email = strings.TrimSpace(body.Email)
 		if body.Nom == "" || body.Email == "" || body.MotDePasse == "" {
@@ -46,7 +42,8 @@ func handlerInscription(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Hash bcrypt — coût 10, bon compromis sécurité/performance
+		// Coût 10 : compromis sécurité/perf raisonnable, bcrypt prend ~70ms
+		// par hash sur une machine moderne et ralentit donc le bruteforce.
 		hash, err := bcrypt.GenerateFromPassword([]byte(body.MotDePasse), 10)
 		if err != nil {
 			reponseErreur(w, http.StatusInternalServerError, "erreur serveur")
@@ -55,7 +52,8 @@ func handlerInscription(db *sql.DB) http.HandlerFunc {
 
 		utilisateur, err := creerUtilisateur(db, body.Nom, body.Email, string(hash))
 		if err != nil {
-			// Contrainte UNIQUE violée → nom ou email déjà pris
+			// Détection de la violation d'UNIQUE par le texte d'erreur : on
+			// préfère un 409 propre à l'utilisateur plutôt qu'un 500 générique.
 			if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
 				reponseErreur(w, http.StatusConflict, "nom ou email déjà utilisé")
 				return
@@ -68,7 +66,6 @@ func handlerInscription(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerConnexion gère POST /api/login
 func handlerConnexion(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
@@ -82,11 +79,14 @@ func handlerConnexion(db *sql.DB) http.HandlerFunc {
 
 		utilisateur, err := trouverParNom(db, body.Nom)
 		if err != nil {
+			// On renvoie le même message qu'un mauvais mot de passe pour ne
+			// pas révéler quels noms d'utilisateur existent.
 			reponseErreur(w, http.StatusUnauthorized, "identifiants incorrects")
 			return
 		}
 
-		// Comparaison bcrypt — résiste aux attaques par timing
+		// bcrypt.CompareHashAndPassword est en temps constant : pas de fuite
+		// par timing sur la comparaison des hash.
 		if err := bcrypt.CompareHashAndPassword([]byte(utilisateur.MotDePasseHash), []byte(body.MotDePasse)); err != nil {
 			reponseErreur(w, http.StatusUnauthorized, "identifiants incorrects")
 			return
@@ -98,13 +98,15 @@ func handlerConnexion(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Cookie HttpOnly — inaccessible depuis JS, protège contre XSS
+		// HttpOnly : inaccessible depuis document.cookie, donc inexploitable
+		// par un script injecté (XSS). SameSite=Lax bloque les CSRF basiques
+		// tout en laissant marcher la navigation depuis nos propres pages.
 		http.SetCookie(w, &http.Cookie{
 			Name:     "session",
 			Value:    token,
 			Path:     "/",
 			HttpOnly: true,
-			MaxAge:   86400, // 24h en secondes
+			MaxAge:   86400,
 			SameSite: http.SameSiteLaxMode,
 		})
 
@@ -112,7 +114,6 @@ func handlerConnexion(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerDeconnexion gère POST /api/logout
 func handlerDeconnexion(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")
@@ -120,7 +121,7 @@ func handlerDeconnexion(db *sql.DB) http.HandlerFunc {
 			supprimerSession(db, cookie.Value)
 		}
 
-		// Supprime le cookie côté client
+		// MaxAge négatif : force le navigateur à supprimer le cookie.
 		http.SetCookie(w, &http.Cookie{
 			Name:     "session",
 			Value:    "",
@@ -133,11 +134,13 @@ func handlerDeconnexion(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerProfil gère GET /api/me
 func handlerProfil(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// L'ID utilisateur est placé dans le contexte par le middleware proteger
-		utilisateurID := r.Context().Value(cleUtilisateurID).(int)
+		utilisateurID, ok := utilisateurDeContexte(r)
+		if !ok {
+			reponseErreur(w, http.StatusUnauthorized, "non connecté")
+			return
+		}
 
 		utilisateur, err := trouverParID(db, utilisateurID)
 		if err != nil {

@@ -7,9 +7,8 @@ import (
 	"time"
 )
 
-const dureeSession = 24 * time.Hour // Session valide 24h
+const dureeSession = 24 * time.Hour
 
-// creerSession génère un token aléatoire et l'insère en base
 func creerSession(db *sql.DB, utilisateurID int) (string, error) {
 	token, err := genererToken()
 	if err != nil {
@@ -27,8 +26,8 @@ func creerSession(db *sql.DB, utilisateurID int) (string, error) {
 	return token, nil
 }
 
-// validerSession vérifie qu'un token de session existe et n'est pas expiré
-// Retourne l'ID de l'utilisateur associé
+// validerSession renvoie l'ID utilisateur si la session existe et n'a pas
+// expiré. Une session expirée est aussitôt purgée pour ne pas s'accumuler.
 func validerSession(db *sql.DB, token string) (int, error) {
 	var utilisateurID int
 	var expireLe time.Time
@@ -41,7 +40,6 @@ func validerSession(db *sql.DB, token string) (int, error) {
 		return 0, err
 	}
 
-	// Suppression automatique si expirée
 	if time.Now().After(expireLe) {
 		supprimerSession(db, token)
 		return 0, sql.ErrNoRows
@@ -50,12 +48,12 @@ func validerSession(db *sql.DB, token string) (int, error) {
 	return utilisateurID, nil
 }
 
-// supprimerSession détruit une session (logout)
 func supprimerSession(db *sql.DB, token string) {
 	db.Exec(`DELETE FROM sessions WHERE id = $1`, token)
 }
 
-// genererToken produit 32 octets aléatoires en hexadécimal
+// genererToken produit 32 octets aléatoires (256 bits d'entropie) encodés en
+// hex : suffisamment imprévisible pour ne pas être deviné par bruteforce.
 func genererToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
