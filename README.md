@@ -71,8 +71,6 @@ find_me_an_event/
 │   │       └── NotFound.jsx
 │   ├── vite.config.js       # Proxy vers le serveur Go
 │   └── package.json
-├── docs/
-│   └── dossier.md           # Dossier détaillé du projet
 ├── .env.example
 ├── .gitignore
 └── README.md
@@ -166,10 +164,3 @@ cd client
 npm run lint
 npm run build
 ```
-
-## Documentation
-
-Le dossier complet du projet (sujet, API externes, fonctionnalités, cas
-d'utilisation, schémas de tables, architecture serveur et client, exemples
-de requêtes/réponses, notes de sécurité, schéma global) est dans
-[`docs/dossier.md`](docs/dossier.md).
