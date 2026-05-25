@@ -40,12 +40,17 @@ export const localisation = () =>
   appel('GET', '/location')
 
 // Événements
-export const evenements = (lat, lon, radius) =>
-  appel('GET', `/events?lat=${lat}&lon=${lon}&radius=${radius}`)
+export const evenements = (lat, lon, radius, categorie = '') =>
+  appel(
+    'GET',
+    `/events?lat=${lat}&lon=${lon}&radius=${radius}&categorie=${encodeURIComponent(categorie)}`
+  )
 
-export const prochainEvenement = (lat, lon, radius) =>
-  appel('GET', `/events/next?lat=${lat}&lon=${lon}&radius=${radius}`)
-
+export const prochainEvenement = (lat, lon, radius, categorie = '') =>
+  appel(
+    'GET',
+    `/events/next?lat=${lat}&lon=${lon}&radius=${radius}&categorie=${encodeURIComponent(categorie)}`
+  )
 // Votes
 export const voter = (id, vote, titre) =>
   appel('POST', `/events/${id}/vote`, { vote, titre })

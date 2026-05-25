@@ -9,7 +9,8 @@ export default function Decouverte() {
   const navigate = useNavigate()
   const [position, setPosition] = useState(null)
   const [rayon, setRayon] = useState(5)
-  const [evenement, setEvenement] = useState(null)
+  const [categorie, setCategorie] = useState('') //
+  const [evenement, setEvenement] = useState(null) //
   const [stats, setStats] = useState(null)
   const [chargement, setChargement] = useState(true)
   const [message, setMessage] = useState('')
@@ -30,7 +31,7 @@ export default function Decouverte() {
     setChargement(true)
     setMessage('')
     try {
-      const data = await prochainEvenement(position.lat, position.lon, rayon)
+      const data = await prochainEvenement(position.lat, position.lon, rayon, categorie)
       if (data.evenement) {
         setEvenement(data.evenement)
         setStats(data.stats)
@@ -44,7 +45,7 @@ export default function Decouverte() {
     } finally {
       setChargement(false)
     }
-  }, [position, rayon])
+  }, [position, rayon, categorie])
 
   useEffect(() => {
     chargerSuivant()
@@ -89,6 +90,22 @@ export default function Decouverte() {
               <option value={20}>20 km</option>
             </select>
           </label>
+
+          <label>
+            Type :
+            <select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
+              <option value="">Tous</option>
+              <option value="cinéma">Cinéma</option>
+              <option value="concert">Concert</option>
+              <option value="exposition">Exposition</option>
+              <option value="théâtre">Théâtre</option>
+              <option value="art">Art</option>
+              <option value="sport">Sport</option>
+              <option value="famille">Famille</option>
+            </select>
+          </label>
+
+
           {position && (
             <span className="position-info">
               📍 {position.ville || 'Position détectée'}

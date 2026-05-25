@@ -160,7 +160,8 @@ func handlerProchainEvenement(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Récupère un lot d'événements
-		evenements, err := rechercherEvenements(lat, lon, rayon, 50)
+		categorie := r.URL.Query().Get("categorie")
+		evenements, err := rechercherEvenements(lat, lon, rayon, 50, categorie)
 		if err != nil {
 			reponseErreur(w, http.StatusBadGateway, "erreur API événements")
 			return

@@ -48,9 +48,11 @@ func handlerEvenements() http.HandlerFunc {
 			rayon = 5 // Rayon par défaut : 5km
 		}
 
+		categorie := r.URL.Query().Get("categorie")
+
 		limite := 20 // Nombre d'événements par requête
 
-		evenements, err := rechercherEvenements(lat, lon, rayon, limite)
+		evenements, err := rechercherEvenements(lat, lon, rayon, limite, categorie)
 		if err != nil {
 			reponseErreur(w, http.StatusBadGateway, "erreur lors de la récupération des événements")
 			return

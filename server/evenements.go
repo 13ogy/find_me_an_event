@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -31,12 +32,21 @@ type Evenement struct {
 const baseURLOpenData = "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/que-faire-a-paris-/records"
 
 // rechercherEvenements appelle l'API OpenData Paris avec un filtre géographique
-func rechercherEvenements(lat, lon float64, rayonKm int, limite int) ([]Evenement, error) {
-	// Filtre ODSQL : événements dans le rayon, avec des dates définies
+func rechercherEvenements(lat, lon float64, rayonKm int, limite int, categorie string) ([]Evenement, error) { // Filtre ODSQL : événements dans le rayon, avec des dates définies
 	filtre := fmt.Sprintf(
 		"within_distance(lat_lon, GEOM'POINT(%f %f)', %dkm) AND date_start IS NOT NULL AND date_end >= '%s'",
 		lon, lat, rayonKm, time.Now().Format("2006-01-02"),
 	)
+
+	categorie = strings.TrimSpace(categorie)
+	if categorie != "" {
+		categorie = strings.ReplaceAll(categorie, "'", "''")
+
+		filtre += fmt.Sprintf(
+			" AND (search(title, '%s') OR search(description, '%s') OR search(lead_text, '%s'))",
+			categorie, categorie, categorie,
+		)
+	}
 
 	params := url.Values{}
 	params.Set("where", filtre)
@@ -58,7 +68,7 @@ func rechercherEvenements(lat, lon float64, rayonKm int, limite int) ([]Evenemen
 
 	// Parsing de la réponse — structure spécifique à l'API OpenData v2.1
 	var resultat struct {
-		TotalCount int              `json:"total_count"`
+		TotalCount int               `json:"total_count"`
 		Results    []json.RawMessage `json:"results"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&resultat); err != nil {
