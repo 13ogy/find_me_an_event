@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { posterAvis } from '../api'
 
-// Formulaire pour poster un avis (note 1-5 + commentaire)
 export default function FormulaireAvis({ evenementId, onAvisCree }) {
   const [commentaire, setCommentaire] = useState('')
   const [note, setNote] = useState(3)
@@ -18,6 +17,8 @@ export default function FormulaireAvis({ evenementId, onAvisCree }) {
       const avis = await posterAvis(evenementId, commentaire.trim(), note)
       setCommentaire('')
       setNote(3)
+      // Le parent insère l'avis en tête de liste sans avoir à refaire un
+      // GET /reviews : affichage instantané.
       if (onAvisCree) onAvisCree(avis)
     } catch (err) {
       setErreur(err.message)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../AuthContext'
+import { useAuth } from '../useAuth'
 import { useNavigate, Link } from 'react-router-dom'
 
 export default function Connexion() {
@@ -8,15 +8,19 @@ export default function Connexion() {
   const [nom, setNom] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
   const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
 
   async function soumettre(e) {
     e.preventDefault()
+    if (envoi) return
     setErreur('')
+    setEnvoi(true)
     try {
       await connecter(nom, motDePasse)
       navigate('/')
     } catch (err) {
       setErreur(err.message)
+      setEnvoi(false)
     }
   }
 
@@ -43,7 +47,9 @@ export default function Connexion() {
           />
         </label>
         {erreur && <p className="erreur">{erreur}</p>}
-        <button type="submit">Se connecter</button>
+        <button type="submit" disabled={envoi}>
+          {envoi ? 'Connexion…' : 'Se connecter'}
+        </button>
       </form>
       <p>
         Pas encore de compte ? <Link to="/inscription">Créer un compte</Link>

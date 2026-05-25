@@ -1,16 +1,17 @@
 # Find Me An Event 🎉
 
-Application web de découverte d'événements à Paris, développée dans le cadre du cours PC3R (Sorbonne Université).
-
-L'utilisateur se connecte, l'application détecte sa position via son adresse IP, et lui propose des événements à proximité. Il peut parcourir les événements un par un (style Tinder), voter like ou unlike, consulter les avis des autres utilisateurs, et laisser des commentaires.
+L'utilisateur se connecte, l'application détecte sa position via son adresse IP,
+et lui propose des événements à proximité. Il peut parcourir les événements un
+par un (style Tinder), voter like ou unlike, consulter les avis des autres
+utilisateurs, et laisser des commentaires.
 
 ## Stack technique
 
 | Composant | Technologie |
 |-----------|-------------|
-| Serveur | Go + net/http (sans framework) |
+| Serveur | Go + `net/http` (sans framework) |
 | Base de données | PostgreSQL |
-| Client | React + Vite |
+| Client | React 19 + Vite |
 | API événements | [OpenData Paris — Que faire à Paris](https://opendata.paris.fr/explore/dataset/que-faire-a-paris-/) |
 | API géolocalisation | [ip-api.com](https://ip-api.com/) |
 
@@ -20,40 +21,43 @@ L'utilisateur se connecte, l'application détecte sa position via son adresse IP
 - [x] Inscription / connexion / déconnexion
 - [x] Géolocalisation automatique via l'IP
 - [x] Recherche d'événements dans un rayon choisi
+- [x] Filtre par catégorie (cinéma, concert, expo, théâtre, art, sport, famille)
 - [x] Parcours des événements (like / unlike)
 - [x] Compteur de likes et unlikes par événement
 - [x] Avis et commentaires des utilisateurs
 - [x] Page de détail d'un événement liké
 - [x] Historique des votes
-- [ ] Design responsive + finitions
+- [x] Design responsive + finitions
 
 ## Structure du projet
 
 ```
 find_me_an_event/
 ├── server/
-│   ├── main.go           # Point d'entrée, routeur
-│   ├── config.go         # Variables d'environnement
-│   ├── db.go             # Connexion PostgreSQL + migrations
-│   ├── cors.go           # Middleware CORS
-│   ├── utilisateur.go    # Struct Utilisateur, requêtes SQL
-│   ├── session.go        # Gestion des sessions (tokens)
-│   ├── auth.go           # Handlers inscription/connexion/déconnexion
-│   ├── middleware.go      # Vérification de session
-│   ├── geolocalisation.go # Client ip-api.com
-│   ├── evenements.go     # Client OpenData Paris
-│   ├── vote.go           # Modèle Vote, requêtes SQL
-│   ├── avis.go           # Modèle Avis, requêtes SQL
-│   ├── handler_api.go    # Handlers localisation + événements
-│   ├── handler_votes.go  # Handlers votes, avis, historique
+│   ├── main.go              # Point d'entrée, routeur
+│   ├── config.go            # Variables d'environnement
+│   ├── db.go                # Connexion PostgreSQL + migrations
+│   ├── cors.go              # Middleware CORS
+│   ├── utilisateur.go       # Struct Utilisateur, requêtes SQL
+│   ├── session.go           # Gestion des sessions
+│   ├── auth.go              # Handlers inscription/connexion/déconnexion
+│   ├── middleware.go        # Vérification de session
+│   ├── geolocalisation.go   # Client ip-api.com
+│   ├── evenements.go        # Client OpenData Paris
+│   ├── vote.go              # Modèle Vote, requêtes SQL
+│   ├── avis.go              # Modèle Avis, requêtes SQL
+│   ├── handler_api.go       # Handlers localisation + événements
+│   ├── handler_votes.go     # Handlers votes, avis, historique
+│   ├── server_test.go       # Tests unitaires (sans base)
 │   └── go.mod / go.sum
 ├── client/
 │   ├── src/
-│   │   ├── main.jsx      # Point d'entrée React
-│   │   ├── App.jsx       # Router + routes protégées
-│   │   ├── api.js        # Appels fetch vers le serveur
-│   │   ├── AuthContext.jsx # État d'authentification
-│   │   ├── app.css       # Styles globaux
+│   │   ├── main.jsx         # Point d'entrée React
+│   │   ├── App.jsx          # Router + routes protégées
+│   │   ├── api.js           # Appels fetch vers le serveur
+│   │   ├── AuthContext.jsx  # Etat d'authentification
+│   │   ├── useAuth.js       # Hook + contexte d'auth
+│   │   ├── app.css          # Styles globaux
 │   │   ├── components/
 │   │   │   ├── Navigation.jsx
 │   │   │   ├── CarteEvenement.jsx
@@ -61,13 +65,15 @@ find_me_an_event/
 │   │   └── pages/
 │   │       ├── Connexion.jsx
 │   │       ├── Inscription.jsx
-│   │       ├── Decouverte.jsx    # Swipe like/unlike
+│   │       ├── Decouverte.jsx       # Swipe like/unlike
 │   │       ├── DetailEvenement.jsx
-│   │       └── Historique.jsx
-│   ├── vite.config.js    # Proxy vers le serveur Go
+│   │       ├── Historique.jsx
+│   │       └── NotFound.jsx
+│   ├── vite.config.js       # Proxy vers le serveur Go
 │   └── package.json
 ├── docs/
-│   └── dossier.md        # Documentation du projet
+│   └── dossier.md           # Dossier détaillé du projet
+├── .env.example
 ├── .gitignore
 └── README.md
 ```
@@ -113,9 +119,11 @@ npm run dev
 ```
 
 Le serveur démarre sur `http://localhost:8080` (tables créées automatiquement).
-Le client démarre sur `http://localhost:5173` et redirige les appels `/api` vers le serveur Go.
+Le client démarre sur `http://localhost:5173` et redirige les appels `/api` vers
+le serveur Go.
 
-> **Note :** si PostgreSQL n'est pas démarré (ex. après un redémarrage), lancez d'abord :
+> **Note :** si PostgreSQL n'est pas démarré (ex. après un redémarrage), lancez
+> d'abord :
 > ```bash
 > brew services start postgresql@14
 > ```
@@ -138,6 +146,30 @@ Le client démarre sur `http://localhost:5173` et redirige les appels `/api` ver
 | POST | /api/events/{id}/reviews | Poster un avis (authentifié) |
 | GET | /api/me/history | Historique des votes (authentifié) |
 
-## Licence
+## Tests
 
-Projet universitaire — PC3R, Sorbonne Université.
+Le serveur est livré avec une petite suite de tests Go qui ne nécessitent pas
+PostgreSQL — elle couvre la génération de tokens, l'extraction d'IP, le
+middleware CORS, les helpers de réponse JSON, le parsing des records OpenData
+et le chargement de la configuration.
+
+```bash
+cd server
+go test ./...
+```
+
+Le client n'a pas de suite de tests automatisés (vérification visuelle dans
+le navigateur), mais le lint passe sans erreur :
+
+```bash
+cd client
+npm run lint
+npm run build
+```
+
+## Documentation
+
+Le dossier complet du projet (sujet, API externes, fonctionnalités, cas
+d'utilisation, schémas de tables, architecture serveur et client, exemples
+de requêtes/réponses, notes de sécurité, schéma global) est dans
+[`docs/dossier.md`](docs/dossier.md).

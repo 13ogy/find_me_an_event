@@ -1,19 +1,26 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { profil, connexion as apiConnexion, deconnexion as apiDeconnexion, inscription as apiInscription } from './api'
+import { useState, useEffect } from 'react'
+import { AuthContext } from './useAuth'
+import {
+  profil,
+  connexion as apiConnexion,
+  deconnexion as apiDeconnexion,
+  inscription as apiInscription,
+} from './api'
 
-const AuthContext = createContext(null)
-
-// Fournit l'état d'authentification à toute l'application
+// Fournit l'état d'auth à l'arbre React et tente une reprise de session au
+// montage (le cookie HttpOnly n'est pas lisible depuis JS, seul un appel
+// serveur peut nous dire si on est connecté).
 export function AuthProvider({ children }) {
   const [utilisateur, setUtilisateur] = useState(null)
   const [chargement, setChargement] = useState(true)
 
-  // Vérifie la session au chargement (cookie existant ?)
   useEffect(() => {
+    let actif = true
     profil()
-      .then(setUtilisateur)
-      .catch(() => setUtilisateur(null))
-      .finally(() => setChargement(false))
+      .then((u) => { if (actif) setUtilisateur(u) })
+      .catch(() => { if (actif) setUtilisateur(null) })
+      .finally(() => { if (actif) setChargement(false) })
+    return () => { actif = false }
   }, [])
 
   async function connecter(nom, mot_de_passe) {
@@ -22,9 +29,10 @@ export function AuthProvider({ children }) {
     return u
   }
 
+  // Le serveur ne renvoie pas de Set-Cookie sur /register : on enchaîne donc
+  // un /login pour démarrer immédiatement la session.
   async function inscrire(nom, email, mot_de_passe) {
     const u = await apiInscription(nom, email, mot_de_passe)
-    // Connexion automatique après inscription
     await connecter(nom, mot_de_passe)
     return u
   }
@@ -39,9 +47,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-// Hook pour accéder au contexte d'auth depuis n'importe quel composant
-export function useAuth() {
-  return useContext(AuthContext)
 }

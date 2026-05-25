@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
-// Localisation représente la position géographique d'un utilisateur
 type Localisation struct {
 	Lat   float64 `json:"lat"`
 	Lon   float64 `json:"lon"`
@@ -15,7 +15,8 @@ type Localisation struct {
 	Pays  string  `json:"pays"`
 }
 
-// reponseIPAPI correspond au format de ip-api.com
+// reponseIPAPI ne mappe que les champs que l'on utilise réellement, le reste
+// du JSON renvoyé par ip-api.com est ignoré silencieusement par le décodeur.
 type reponseIPAPI struct {
 	Status  string  `json:"status"`
 	Lat     float64 `json:"lat"`
@@ -25,9 +26,10 @@ type reponseIPAPI struct {
 	Message string  `json:"message"`
 }
 
-// localiserIP interroge ip-api.com pour géolocaliser une adresse IP
 func localiserIP(ip string) (*Localisation, error) {
-	// ip-api.com accepte l'IP dans l'URL, ou renvoie celle de l'appelant si vide
+	// Sans IP dans l'URL, ip-api.com géolocalise l'IP appelante — ce qui
+	// donne celle du serveur en local et n'a pas de sens : on passe donc
+	// systématiquement l'IP du client.
 	url := fmt.Sprintf("http://ip-api.com/json/%s", ip)
 
 	client := &http.Client{Timeout: 5 * time.Second}
@@ -54,22 +56,24 @@ func localiserIP(ip string) (*Localisation, error) {
 	}, nil
 }
 
-// extraireIP récupère l'IP du client depuis les en-têtes ou RemoteAddr
+// extraireIP regarde d'abord les en-têtes posés par un éventuel reverse
+// proxy, puis retombe sur RemoteAddr (qui contient ip:port).
 func extraireIP(r *http.Request) string {
-	// X-Forwarded-For est rempli par les proxys/load balancers
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		return xff
+		// X-Forwarded-For peut chaîner plusieurs IPs séparées par ", " :
+		// la première est celle du client d'origine.
+		if i := strings.IndexByte(xff, ','); i >= 0 {
+			return strings.TrimSpace(xff[:i])
+		}
+		return strings.TrimSpace(xff)
 	}
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
 		return xri
 	}
 
-	// RemoteAddr contient ip:port, on garde juste l'IP
 	ip := r.RemoteAddr
-	for i := len(ip) - 1; i >= 0; i-- {
-		if ip[i] == ':' {
-			return ip[:i]
-		}
+	if i := strings.LastIndexByte(ip, ':'); i >= 0 {
+		return ip[:i]
 	}
 	return ip
 }

@@ -1,5 +1,7 @@
-// Fonctions d'appel au serveur — simples et directes
-// Toutes les requêtes incluent les cookies (credentials) pour l'authentification
+// Petit wrapper fetch : injecte le content-type JSON et `credentials: 'include'`
+// pour que le cookie de session traverse le proxy Vite vers le serveur Go.
+// Lève une Error contenant le message renvoyé par le serveur si le statut HTTP
+// n'est pas 2xx, ce qui permet aux composants de faire un simple try/catch.
 
 const BASE = '/api'
 
@@ -7,7 +9,7 @@ async function appel(methode, chemin, body = null) {
   const options = {
     method: methode,
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Envoie le cookie de session
+    credentials: 'include',
   }
   if (body) {
     options.body = JSON.stringify(body)
@@ -22,7 +24,6 @@ async function appel(methode, chemin, body = null) {
   return data
 }
 
-// Auth
 export const inscription = (nom, email, mot_de_passe) =>
   appel('POST', '/register', { nom, email, mot_de_passe })
 
@@ -35,18 +36,21 @@ export const deconnexion = () =>
 export const profil = () =>
   appel('GET', '/me')
 
-// Géolocalisation
 export const localisation = () =>
   appel('GET', '/location')
 
-// Événements
-export const evenements = (lat, lon, radius) =>
-  appel('GET', `/events?lat=${lat}&lon=${lon}&radius=${radius}`)
+export const evenements = (lat, lon, radius, categorie = '') =>
+  appel(
+    'GET',
+    `/events?lat=${lat}&lon=${lon}&radius=${radius}&categorie=${encodeURIComponent(categorie)}`
+  )
 
-export const prochainEvenement = (lat, lon, radius) =>
-  appel('GET', `/events/next?lat=${lat}&lon=${lon}&radius=${radius}`)
+export const prochainEvenement = (lat, lon, radius, categorie = '') =>
+  appel(
+    'GET',
+    `/events/next?lat=${lat}&lon=${lon}&radius=${radius}&categorie=${encodeURIComponent(categorie)}`
+  )
 
-// Votes
 export const voter = (id, vote, titre) =>
   appel('POST', `/events/${id}/vote`, { vote, titre })
 
@@ -56,13 +60,11 @@ export const supprimerVote = (id) =>
 export const statsEvenement = (id) =>
   appel('GET', `/events/${id}/stats`)
 
-// Avis
 export const listerAvis = (id) =>
   appel('GET', `/events/${id}/reviews`)
 
 export const posterAvis = (id, commentaire, note) =>
   appel('POST', `/events/${id}/reviews`, { commentaire, note })
 
-// Historique
 export const historique = () =>
   appel('GET', '/me/history')

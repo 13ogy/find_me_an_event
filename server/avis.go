@@ -5,32 +5,38 @@ import (
 	"time"
 )
 
-// Avis représente un commentaire d'un utilisateur sur un événement
 type Avis struct {
-	ID            int       `json:"id"`
-	UtilisateurID int       `json:"utilisateur_id"`
-	NomUtilisateur string   `json:"nom_utilisateur"`
-	EvenementID   string    `json:"evenement_id"`
-	Commentaire   string    `json:"commentaire"`
-	Note          int       `json:"note"`
-	CreeLe        time.Time `json:"cree_le"`
+	ID             int       `json:"id"`
+	UtilisateurID  int       `json:"utilisateur_id"`
+	NomUtilisateur string    `json:"nom_utilisateur"`
+	EvenementID    string    `json:"evenement_id"`
+	Commentaire    string    `json:"commentaire"`
+	Note           int       `json:"note"`
+	CreeLe         time.Time `json:"cree_le"`
 }
 
-// creerAvis insère un nouvel avis en base
+// creerAvis insère l'avis et renvoie l'objet complet (nom auteur inclus) en
+// un seul aller-retour, pour que le client puisse l'afficher tout de suite
+// sans relancer un GET /reviews.
 func creerAvis(db *sql.DB, utilisateurID int, evenementID, commentaire string, note int) (*Avis, error) {
 	a := &Avis{}
 	err := db.QueryRow(
-		`INSERT INTO avis (utilisateur_id, evenement_id, commentaire, note)
-		 VALUES ($1, $2, $3, $4)
-		 RETURNING id, utilisateur_id, evenement_id, commentaire, note, cree_le`,
+		`WITH nouveau AS (
+		   INSERT INTO avis (utilisateur_id, evenement_id, commentaire, note)
+		   VALUES ($1, $2, $3, $4)
+		   RETURNING id, utilisateur_id, evenement_id, commentaire, note, cree_le
+		 )
+		 SELECT n.id, n.utilisateur_id, u.nom, n.evenement_id, n.commentaire, n.note, n.cree_le
+		 FROM nouveau n
+		 JOIN utilisateurs u ON n.utilisateur_id = u.id`,
 		utilisateurID, evenementID, commentaire, note,
-	).Scan(&a.ID, &a.UtilisateurID, &a.EvenementID, &a.Commentaire, &a.Note, &a.CreeLe)
+	).Scan(&a.ID, &a.UtilisateurID, &a.NomUtilisateur, &a.EvenementID, &a.Commentaire, &a.Note, &a.CreeLe)
 	return a, err
 }
 
-// listerAvis renvoie tous les avis pour un événement donné
+// listerAvis fait la jointure avec utilisateurs pour récupérer le nom de
+// l'auteur dans la même requête : pas de N+1 côté handler.
 func listerAvis(db *sql.DB, evenementID string) ([]Avis, error) {
-	// Jointure pour récupérer le nom de l'auteur sans requête supplémentaire
 	rows, err := db.Query(
 		`SELECT a.id, a.utilisateur_id, u.nom, a.evenement_id, a.commentaire, a.note, a.cree_le
 		 FROM avis a
@@ -51,6 +57,9 @@ func listerAvis(db *sql.DB, evenementID string) ([]Avis, error) {
 			return nil, err
 		}
 		liste = append(liste, a)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return liste, nil
 }

@@ -1,7 +1,6 @@
-import { useAuth } from '../AuthContext'
+import { useAuth } from '../useAuth'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-// Barre de navigation commune à toutes les pages protégées
 export default function Navigation() {
   const { utilisateur, deconnecter } = useAuth()
   const navigate = useNavigate()

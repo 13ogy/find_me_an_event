@@ -8,10 +8,13 @@ import (
 	"strings"
 )
 
-// handlerVoter gère POST /api/events/{id}/vote
 func handlerVoter(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utilisateurID := r.Context().Value(cleUtilisateurID).(int)
+		utilisateurID, ok := utilisateurDeContexte(r)
+		if !ok {
+			reponseErreur(w, http.StatusUnauthorized, "non connecté")
+			return
+		}
 		evenementID := r.PathValue("id")
 
 		var body struct {
@@ -23,6 +26,8 @@ func handlerVoter(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Liste blanche : on bloque toute valeur autre que les deux attendues
+		// pour ne pas polluer la table ni casser le CHECK SQL.
 		if body.Vote != "like" && body.Vote != "unlike" {
 			reponseErreur(w, http.StatusBadRequest, "vote doit être 'like' ou 'unlike'")
 			return
@@ -37,10 +42,13 @@ func handlerVoter(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerSupprimerVote gère DELETE /api/events/{id}/vote
 func handlerSupprimerVote(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utilisateurID := r.Context().Value(cleUtilisateurID).(int)
+		utilisateurID, ok := utilisateurDeContexte(r)
+		if !ok {
+			reponseErreur(w, http.StatusUnauthorized, "non connecté")
+			return
+		}
 		evenementID := r.PathValue("id")
 
 		if err := supprimerVote(db, utilisateurID, evenementID); err != nil {
@@ -52,7 +60,6 @@ func handlerSupprimerVote(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerStats gère GET /api/events/{id}/stats
 func handlerStats(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		evenementID := r.PathValue("id")
@@ -67,7 +74,6 @@ func handlerStats(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerListerAvis gère GET /api/events/{id}/reviews
 func handlerListerAvis(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		evenementID := r.PathValue("id")
@@ -77,18 +83,23 @@ func handlerListerAvis(db *sql.DB) http.HandlerFunc {
 			reponseErreur(w, http.StatusInternalServerError, "erreur avis")
 			return
 		}
+		// On force un tableau vide plutôt que null : facilite le code côté
+		// React (.map sur null plante).
 		if avis == nil {
-			avis = []Avis{} // Toujours renvoyer un tableau, jamais null
+			avis = []Avis{}
 		}
 
 		reponseJSON(w, http.StatusOK, avis)
 	}
 }
 
-// handlerPosterAvis gère POST /api/events/{id}/reviews
 func handlerPosterAvis(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utilisateurID := r.Context().Value(cleUtilisateurID).(int)
+		utilisateurID, ok := utilisateurDeContexte(r)
+		if !ok {
+			reponseErreur(w, http.StatusUnauthorized, "non connecté")
+			return
+		}
 		evenementID := r.PathValue("id")
 
 		var body struct {
@@ -120,10 +131,13 @@ func handlerPosterAvis(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerHistorique gère GET /api/me/history
 func handlerHistorique(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utilisateurID := r.Context().Value(cleUtilisateurID).(int)
+		utilisateurID, ok := utilisateurDeContexte(r)
+		if !ok {
+			reponseErreur(w, http.StatusUnauthorized, "non connecté")
+			return
+		}
 
 		votes, err := obtenirHistorique(db, utilisateurID)
 		if err != nil {
@@ -138,11 +152,16 @@ func handlerHistorique(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// handlerProchainEvenement gère GET /api/events/next?lat=X&lon=Y&radius=Z
-// Renvoie le prochain événement que l'utilisateur n'a pas encore voté
+// handlerProchainEvenement parcourt un lot d'événements OpenData et renvoie
+// le premier que l'utilisateur n'a pas encore vu. Quand tout est consommé
+// dans le rayon, on renvoie evenement=null avec un message d'invite.
 func handlerProchainEvenement(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utilisateurID := r.Context().Value(cleUtilisateurID).(int)
+		utilisateurID, ok := utilisateurDeContexte(r)
+		if !ok {
+			reponseErreur(w, http.StatusUnauthorized, "non connecté")
+			return
+		}
 
 		lat, err := strconv.ParseFloat(r.URL.Query().Get("lat"), 64)
 		if err != nil {
@@ -159,14 +178,15 @@ func handlerProchainEvenement(db *sql.DB) http.HandlerFunc {
 			rayon = 5
 		}
 
-		// Récupère un lot d'événements
-		evenements, err := rechercherEvenements(lat, lon, rayon, 50)
+		// Lot de 50 : compromis entre nombre d'appels API et chance de
+		// trouver rapidement un événement non encore voté.
+		categorie := r.URL.Query().Get("categorie")
+		evenements, err := rechercherEvenements(lat, lon, rayon, 50, categorie)
 		if err != nil {
 			reponseErreur(w, http.StatusBadGateway, "erreur API événements")
 			return
 		}
 
-		// Filtre ceux déjà votés
 		dejaVotes, err := evenementsDejaVotes(db, utilisateurID)
 		if err != nil {
 			reponseErreur(w, http.StatusInternalServerError, "erreur base de données")
@@ -175,7 +195,6 @@ func handlerProchainEvenement(db *sql.DB) http.HandlerFunc {
 
 		for _, ev := range evenements {
 			if !dejaVotes[ev.ID] {
-				// Ajoute les stats de votes à la réponse
 				stats, _ := obtenirStatsVotes(db, ev.ID)
 				reponseJSON(w, http.StatusOK, map[string]any{
 					"evenement": ev,
@@ -185,7 +204,6 @@ func handlerProchainEvenement(db *sql.DB) http.HandlerFunc {
 			}
 		}
 
-		// Tous les événements ont été votés
 		reponseJSON(w, http.StatusOK, map[string]any{
 			"evenement": nil,
 			"message":   "plus d'événements à découvrir dans ce rayon",

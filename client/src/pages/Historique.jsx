@@ -3,7 +3,6 @@ import { historique } from '../api'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 
-// Page historique — liste des événements votés par l'utilisateur
 export default function Historique() {
   const [votes, setVotes] = useState([])
   const [chargement, setChargement] = useState(true)
@@ -16,6 +15,8 @@ export default function Historique() {
       .finally(() => setChargement(false))
   }, [])
 
+  // On sépare likes et unlikes en deux sections pour la lisibilité plutôt
+  // que de tout mélanger chronologiquement.
   const likes = votes.filter(v => v.vote === 'like')
   const unlikes = votes.filter(v => v.vote === 'unlike')
 
