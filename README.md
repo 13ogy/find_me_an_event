@@ -73,6 +73,7 @@ find_me_an_event/
 │   └── package.json
 ├── .env.example
 ├── .gitignore
+├── pc3r.pdf                 # Rapport du projet
 └── README.md
 ```
 
@@ -164,3 +165,9 @@ cd client
 npm run lint
 npm run build
 ```
+
+## Rapport
+
+Le rapport complet du projet (présentation, architecture, API REST, sécurité,
+cas d'utilisation) est disponible dans [`pc3r.pdf`](pc3r.pdf) à la racine du
+dépôt.
